@@ -1,9 +1,10 @@
 import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
 
 def operations_in_computational_graph ():
 
     sess = tf.Session()
-    import numpy as np
     x_vals = np.array([1., 3., 5., 7., 9.])
     x_data = tf.placeholder(tf.float32)
     m_const = tf.constant(3.)
@@ -14,7 +15,6 @@ def operations_in_computational_graph ():
 def layering_nested_operations ():
 
     sess = tf.Session()
-    import numpy as np
     my_array = np.array([[1.,3.,5.,7.,9.],[-2.,0.,2.,4.,6.],[-6.,-3.,0.,3.,6.]])
     x_vals = np.array([my_array, my_array + 1])
     x_data = tf.placeholder(tf.float32, shape=(3,5))
@@ -39,7 +39,6 @@ def custom_layer(input_matrix):
     return tf.sigmoid(temp)
 
 def working_with_multiple_layers ():
-    import numpy as np
     sess = tf.Session()
     x_shape = [1, 4, 4, 1]
     x_val = np.random.uniform(size=x_shape)
@@ -52,5 +51,71 @@ def working_with_multiple_layers ():
         custom_layer1 = custom_layer(mov_avg_layer)
         print(sess.run(custom_layer1, feed_dict={x_data: x_val}))
 
+def implementing_loss_functions ():
+    sess = tf.Session()
+    x_vals = tf.linspace(-1.,1.,500)
+    target = tf.constant(0.)
 
-working_with_multiple_layers()
+    ##L2 Loss
+    l2_y_vals = tf.square(target - x_vals)
+    l2_y_out = sess.run(l2_y_vals)
+
+    ##L1 Loss
+    l1_y_vals = tf.abs(target - x_vals)
+    l1_y_out = sess.run(l1_y_vals)
+
+
+    ##Pseudo-Huber
+    delta1 = tf.constant(0.25)
+    delta2 = tf.constant(5.)
+
+    phuber1_y_vals = tf.multiply(tf.square(delta1), tf.sqrt(1. + tf.square((target - x_vals)/delta1)) - 1.)
+    phuber1_y_out = sess.run(phuber1_y_vals)
+
+    phuber2_y_vals = tf.multiply(tf.square(delta2), tf.sqrt(1. + tf.square((target - x_vals) / delta2)) - 1.)
+    phuber2_y_out = sess.run(phuber2_y_vals)
+
+    ##New values and target
+    x_vals = tf.linspace(-3., 5., 500)
+    target = tf.constant(1.)
+    targets = tf.fill([500,], 1.)
+
+    ##Hinge  Loss
+    hinge_y_vals = tf.maximum(0., 1. - tf.multiply(target, x_vals))
+    hinge_y_out = sess.run(hinge_y_vals)
+
+    ##Cross Entropy
+    xentropy_y_vals = - tf.multiply(target, tf.log(x_vals) - tf.multiply((1. - target), tf.log(1. - x_vals)))
+    xentropy_y_out = sess.run(xentropy_y_vals)
+
+    ##Sigmoid cross entropy
+    xentropy_sigmoid_y_vals = tf.nn.sigmoid_cross_entropy_with_logits(logits=x_vals, labels=targets)
+    xentropy_sigmoid_y_out = sess.run(xentropy_sigmoid_y_vals)
+
+    ##Weighted cross entropy loss
+    weight = tf.constant(0.5)
+    xentropy_weighted_y_vals = tf.nn.weighted_cross_entropy_with_logits(x_vals, targets, weight)
+    xentropy_weighted_y_out = sess.run(xentropy_weighted_y_vals)
+
+    ##softmax cross-entropy
+    unscaled_logits = tf.constant([[1.,-3.,10.]])
+    target_dist = tf.constant([[0.1,0.02,88]])
+    softmax_xentropy = tf.nn.softmax_cross_entropy_with_logits(logits=unscaled_logits, labels=target_dist)
+
+    ##Sparse softmax cross entropy
+    unscaled_logits = tf.constant([[1.,-3,10.]])
+    sparse_target_dist = tf.constant([2])
+    sparse_xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=unscaled_logits, labels=sparse_target_dist)
+
+    x_array = sess.run(x_vals)
+    plt.plot(x_array, l2_y_out, 'b-', label='L2 Loss')
+    plt.plot(x_array, l1_y_out, 'r--', label='L1 Loss')
+    plt.plot(x_array, phuber1_y_out, 'k-', label='P-Huber Loss (0.25)')
+    plt.plot(x_array, phuber2_y_out, 'g-', label='P-Huber Loss (0.5)')
+    plt.ylim(-0.2,0.4)
+    plt.legend(loc='lower right', prop={'size': 11})
+    plt.show()
+
+implementing_loss_functions()
+
+
