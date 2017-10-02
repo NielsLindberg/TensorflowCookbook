@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+from tensorflow.python.framework import ops
 
 def operations_in_computational_graph ():
 
@@ -99,11 +100,11 @@ def implementing_loss_functions ():
 
     ##softmax cross-entropy
     unscaled_logits = tf.constant([[1.,-3.,10.]])
-    target_dist = tf.constant([[0.1,0.02,88]])
+    target_dist = tf.constant([[0.1,0.02,0.88]])
     softmax_xentropy = tf.nn.softmax_cross_entropy_with_logits(logits=unscaled_logits, labels=target_dist)
 
     ##Sparse softmax cross entropy
-    unscaled_logits = tf.constant([[1.,-3,10.]])
+    unscaled_logits = tf.constant([[1.,-3.,10.]])
     sparse_target_dist = tf.constant([2])
     sparse_xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=unscaled_logits, labels=sparse_target_dist)
 
@@ -116,6 +117,63 @@ def implementing_loss_functions ():
     plt.legend(loc='lower right', prop={'size': 11})
     plt.show()
 
-implementing_loss_functions()
+    x_array = sess.run(x_vals)
+    plt.plot(x_array, hinge_y_out, 'b-', label='Hinge Loss')
+    plt.plot(x_array, xentropy_y_out, 'r--', label='Cross Entropy Loss')
+    plt.plot(x_array, xentropy_sigmoid_y_out, 'k-', label='Cross Entropy Sigmoid Loss')
+    plt.plot(x_array, xentropy_weighted_y_out, 'g:', label='Weighted Cross Entropy Loss(x0.5)')
+    plt.ylim(-1.5, 3)
+    plt.legend(loc='lower right', prop={'size': 11})
+    plt.show()
+
+def implementing_back_propagation ():
+    sess = tf.Session()
+    x_vals = np.random.normal(1, 0.1, 100)
+    y_vals = np.repeat(10., 100)
+    x_data = tf.placeholder(shape=[1], dtype=tf.float32)
+    y_target = tf.placeholder(shape=[1], dtype=tf.float32)
+    A = tf.Variable(tf.random_normal(shape=[1]))
+
+    my_output = tf.multiply(x_data, A)
+
+    loss = tf.square(my_output - y_target)
+
+    init = tf.initialize_all_variables()
+    sess.run(init)
+
+    my_opt = tf.train.GradientDescentOptimizer(learning_rate=0.02)
+    train_step = my_opt.minimize(loss)
+
+    for i in range(100):
+        rand_index = np.random.choice(100)
+        rand_x = [x_vals[rand_index]]
+        rand_y = [y_vals[rand_index]]
+        sess.run(train_step, feed_dict={x_data: rand_x, y_target: rand_y})
+        if( i + 1)%25==0:
+            print('Step #' + str(i+1) + ' A = ' + str(sess.run(A)))
+            print('Loss = ' + str(sess.run(loss, feed_dict={x_data: rand_x, y_target: rand_y})))
+
+    ## Simple Classification
+    ops.reset_default_graph()
+    sess = tf.Session()
+
+    x_vals = np.concatenate((np.random.normal(-1, 1, 50), np.random.normal(3,1, 50)))
+    y_vals = np.concatenate((np.repeat(0., 50), np.repeat(1.,50)))
+    x_data = tf.placeholder(shape=[1], dtype=tf.float32)
+    y_target = tf.placeholder(shape=[1], dtype=tf.float32)
+    A = tf.Variable(tf.random_normal(mean=10, shape=[1]))
+    my_output = tf.add(x_data, A)
+
+    my_output_expanded = tf.expand_dims(my_output, 0)
+    y_target_expanded = tf.expand_dims(y_target, 0)
+
+    init = tf.initialize_all_variables()
+    sess.run(init)
+
+    xentropy = tf.nn.sigmoid_cross_entropy_with_logits(my_output_expanded, y_target_expanded)
+    my_opt = tf.train.GradientDescentOptimizer(0.05)
+
+
+
 
 
