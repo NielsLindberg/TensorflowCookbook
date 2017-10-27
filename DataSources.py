@@ -6,7 +6,7 @@ def iris_data ():
 def birth_weight_data ():
     ## DOESNT WORK FORBIDDEN ERROR CODE 403 ON REQUEST
     import requests
-    birthdata_url = 'https://www.umass.edu/statdata/data/lowbwt.data'
+    birthdata_url = 'https://www.umass.edu/statdata/statdata/data/lowbwt.dat'
     birth_file = requests.get(birthdata_url)
     birth_data = birth_file.text.split('\'r\n') [5:]
     birth_header = [x for x in birth_data[0].split() if len(x)>=1]
